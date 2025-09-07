@@ -1,33 +1,66 @@
-import React from "react";
-import BookingForm from "@/components/booking/BookingForm";
-import OrderSummary from "@/components/booking/OrderSummary";
-import CancellationPolicy from "@/components/booking/CancellationPolicy";
+import axios from "axios";
+import { useState } from "react";
 
-export default function BookingPage() {
-  const bookingDetails = {
-    propertyName: "Villa Arrecife Beach House",
-    price: 7500,
-    bookingFee: 65,
-    totalNights: 3,
-    startDate: "24 August 2024",
-    imageUrl: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
-    reviewScore: 4.76,
-    reviewCount: 345,
+export default function BookingForm() {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    cardNumber: "",
+    expirationDate: "",
+    cvv: "",
+    billingAddress: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
+        formData
+      );
+      alert("Booking confirmed!");
+    } catch (error) {
+      setError("Failed to submit booking.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="order-2 lg:order-1">
-            <BookingForm />
-            <CancellationPolicy />
-          </div>
-          <div className="order-1 lg:order-2">
-            <OrderSummary bookingDetails={bookingDetails} />
-          </div>
-        </div>
-      </div>
-    </div>
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 space-y-4">
+      {Object.keys(formData).map((field) => (
+        <input
+          key={field}
+          type="text"
+          name={field}
+          value={(formData as any)[field]}
+          onChange={handleChange}
+          placeholder={field}
+          className="border rounded p-2 w-full"
+        />
+      ))}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        {loading ? "Processing..." : "Confirm & Pay"}
+      </button>
+
+      {error && <p className="text-red-500">{error}</p>}
+    </form>
   );
 }
